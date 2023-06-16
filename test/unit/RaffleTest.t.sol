@@ -18,6 +18,7 @@ contract RaffleTest is Test {
     uint256 entranceFee;
     uint32 callbackGasLimit;
     address vrfCoordinatorV2;
+    address link;
 
     address public PLAYER = makeAddr("player");
     uint256 public constant STARTING_BALANCE = 10 ether;
@@ -37,7 +38,8 @@ contract RaffleTest is Test {
             interval,
             entranceFee,
             callbackGasLimit,
-            vrfCoordinatorV2
+            vrfCoordinatorV2,
+            link
         ) = helperConfig.activeNetworkConfig();
     }
 
@@ -66,7 +68,7 @@ contract RaffleTest is Test {
         raffle.enterRaffle{value: entranceFee}();
     }
 
-    function cantEbterWhenRaffleIsCalculating() public playerEnter {
+    function cantbterWhenRaffleIsCalculating() public playerEnter {
         raffle.enterRaffle{value: entranceFee}();
         vm.warp(block.timestamp + interval + 1);
         vm.roll(block.number + 1);
@@ -74,6 +76,5 @@ contract RaffleTest is Test {
         vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
         vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
-        
     }
 }
