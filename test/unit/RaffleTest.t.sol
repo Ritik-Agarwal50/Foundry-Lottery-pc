@@ -23,15 +23,16 @@ contract RaffleTest is Test {
     address public PLAYER = makeAddr("player");
     uint256 public constant STARTING_BALANCE = 10 ether;
 
-    modifier playerEnter() {
-        vm.prank(PLAYER);
-        vm.deal(PLAYER, STARTING_BALANCE);
-        _;
-    }
+    // modifier playerEnter() {
+    //     vm.prank(PLAYER);
+    //     vm.deal(PLAYER, STARTING_BALANCE);
+    //     _;
+    // }
 
     function setUp() external {
         DeployRaffle deployer = new DeployRaffle();
         (raffle, helperConfig) = deployer.run();
+        vm.deal(PLAYER, STARTING_BALANCE);
         (
             subscriptionId,
             gasLane, // keyHash
@@ -47,28 +48,28 @@ contract RaffleTest is Test {
         assert(raffle.getRaffleState() == Raffle.RaffleState.OPEN);
     }
 
-    function testRaffleRevertsWhenYouDontHaveEnoughBalance()
-        public
-        playerEnter
-    {
-        //vm.prank(PLAYER);
+    function testRaffleRevertsWhenYouDontHaveEnoughBalance() public {
+        vm.prank(PLAYER);
         vm.expectRevert(Raffle.Raffle__SendMoreToEnterRaffle.selector);
         raffle.enterRaffle();
     }
 
-    function testRaffleRecordsWhenTheyEntered() public playerEnter {
+    function testRaffleRecordsWhenTheyEntered() public {
+        vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
         address playerRecorded = raffle.getPlayer(0);
         assert(playerRecorded == PLAYER);
     }
 
-    function testEmitsEventsOnEntrance() public playerEnter {
+    function testEmitsEventsOnEntrance() public {
+        vm.prank(PLAYER);
         vm.expectEmit(true, false, false, false, address(raffle));
         emit RaffleEnter(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
     }
 
-    function cantbterWhenRaffleIsCalculating() public playerEnter {
+    function testCantEnterWhenRaffleIsCalculating() public {
+        vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
         vm.warp(block.timestamp + interval + 1);
         vm.roll(block.number + 1);
@@ -77,4 +78,6 @@ contract RaffleTest is Test {
         vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
     }
+
+    
 }
