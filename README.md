@@ -16,3 +16,10 @@ vm.roll()
 forge coverage --report debug > coverage.txt
 ```
 -> This command will tell which line we haven't debug, and it will store all the details to the coverage.txt file
+
+```
+vm.recordLogs 
+```
+-> Tells the VM To start recording all thee emitted Event To access them use 
+
+```

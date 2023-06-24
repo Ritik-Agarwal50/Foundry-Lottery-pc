@@ -5,6 +5,8 @@ import {Raffle} from "../../src/Raffle.sol";
 import {console, Test} from "forge-std/Test.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
+import {Vm} from "forge-std/Vm.sol";
+import{VRFCoordinatorV2Mock} from "../mocks/VRFCoordinatorV2Mock.sol";
 
 contract RaffleTest is Test {
     event RaffleEnter(address indexed player);
@@ -124,4 +126,65 @@ contract RaffleTest is Test {
 
         assert(!upkeepNeeded);
     }
+
+    function testPerformUpKeepCanOnlyRunIfCheckUpKeepIsTrue() public {
+        //Arrange
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+
+        //ACT
+        raffle.performUpkeep("");
+    }
+
+    function testPerformUpKeepRevertIdcheckUpKeepIsFalse() public {
+        //Arrange
+        uint256 currentBalance = 0;
+        uint256 numPlayers = 0;
+        uint256 raffleState = 0;
+        //ACT
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Raffle.Raffle__UpkeepNotNeeded.selector,
+                currentBalance,
+                numPlayers,
+                raffleState
+            )
+        );
+        raffle.performUpkeep("");
+    }
+
+    modifier raffleEnteredAndTimePassed() {
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+        _;
+    }
+
+    /**
+     * function testPerformUpKeppUopdateRaffleStatr() public raffleEnteredAndTimePassed {
+     *    //Arrange
+     * vm.recordLogs();
+     * raffle.performUpkeep("");
+     * vm.Log[] memory entries = vm.. getRecordedLogs();
+     * bytes32 requestId = entries[1].topics[1];
+     * assert(uint256(requestId) > 0);
+     *
+     * }
+     */
+    function testFullfilleRandomWordsCanOnlyBeCAlledAfterPerformupKeep(uint256 randomRequestId)
+        public
+        raffleEnteredAndTimePassed
+    {
+        vm.expectRevert("nonexistent request");
+        VRFCoordinatorV2Mock(vrfCoordinatorV2).fulfillRandomWords(
+            randomRequestId,
+            address(raffle)
+        );
+
+    }
+
+    
 }
