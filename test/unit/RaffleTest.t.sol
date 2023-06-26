@@ -6,9 +6,11 @@ import {console, Test} from "forge-std/Test.sol";
 import {DeployRaffle} from "../../script/DeployRaffle.s.sol";
 import {HelperConfig} from "../../script/HelperConfig.s.sol";
 import {Vm} from "forge-std/Vm.sol";
+import {StdCheats} from "forge-std/StdCheats.sol";
+
 import {VRFCoordinatorV2Mock} from "../mocks/VRFCoordinatorV2Mock.sol";
 
-contract RaffleTest is Test {
+contract RaffleTest is StdCheats, Test {
     event RaffleEnter(address indexed player);
 
     Raffle raffle;
@@ -36,13 +38,14 @@ contract RaffleTest is Test {
         (raffle, helperConfig) = deployer.run();
         vm.deal(PLAYER, STARTING_BALANCE);
         (
-            subscriptionId,
+            ,
             gasLane, // keyHash
             interval,
             entranceFee,
             callbackGasLimit,
             vrfCoordinatorV2,
-            link
+            ,
+
         ) = helperConfig.activeNetworkConfig();
     }
 
@@ -184,9 +187,17 @@ contract RaffleTest is Test {
         );
     }
 
+    modifier skipFork() {
+        if (block.chainid != 31337) {
+            return;
+        }
+        _;
+    }
+
     function testFullFillRandomWordsPicksAWinnerResetAndSendMoney()
         public
         raffleEnteredAndTimePassed
+        skipFork
     {
         //Arrange
         uint256 additionalEmtrance = 5;

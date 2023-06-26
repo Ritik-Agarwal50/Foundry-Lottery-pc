@@ -10,17 +10,25 @@ import {DevOpsTools} from "lib/foundry-devops/src/DevOpsTools.sol";
 contract CreateSubscription is Script {
     function createSubscriptionUsingConfig() public returns (uint64) {
         HelperConfig helperConfig = new HelperConfig();
-        (, , , , , address vrfCoordinatorV2, ) = helperConfig
-            .activeNetworkConfig();
-        return createSubscription(vrfCoordinatorV2);
+        (
+            ,
+            ,
+            ,
+            ,
+            ,
+            address vrfCoordinatorV2,
+            ,
+            uint256 deployerkey
+        ) = helperConfig.activeNetworkConfig();
+        return createSubscription(vrfCoordinatorV2, deployerkey);
     }
 
-    function createSubscription(address vrfCoordinator)
+    function createSubscription(address vrfCoordinator, uint256 deployerkey)
         public
         returns (uint64)
     {
         console.log("createSubscription", block.chainid);
-        vm.startBroadcast();
+        vm.startBroadcast(deployerkey);
         uint64 subId = VRFCoordinatorV2Mock(vrfCoordinator)
             .createSubscription();
         vm.stopBroadcast();
@@ -46,29 +54,31 @@ contract FundSubscription is Script {
             ,
             ,
             address vrfCoordinatorV2,
-            address link
+            address link,
+            uint256 deployerkey
         ) = helperConfig.activeNetworkConfig();
-        fundSubscription(vrfCoordinatorV2, subId, link);
+        fundSubscription(vrfCoordinatorV2, subId, link, deployerkey);
     }
 
     function fundSubscription(
         address vrfCoordinatorV2,
         uint64 subdId,
-        address link
+        address link,
+        uint256 deployerkey
     ) public {
         console.log("Funding Subscription", subdId);
         console.log("Using vrfCoordinator", vrfCoordinatorV2);
         console.log("Using link", link);
 
         if (block.chainid == 31337) {
-            vm.startBroadcast();
+            vm.startBroadcast(deployerkey);
             VRFCoordinatorV2Mock(vrfCoordinatorV2).fundSubscription(
                 subdId,
                 FUND_AMOUNT
             );
             vm.stopBroadcast();
         } else {
-            vm.startBroadcast();
+            vm.startBroadcast(deployerkey);
             LinkToken(link).transferAndCall(
                 vrfCoordinatorV2,
                 FUND_AMOUNT,
@@ -87,21 +97,30 @@ contract AddConsumer is Script {
     function addConsumer(
         address raffle,
         address vrfCoordinatorV2,
-        uint64 subId
-    ) public {
+        uint64 subId,
+        uint256 deployerkey
+    ) public { 
         console.log("Adding Consumer", raffle);
         console.log("Using vrfCoordinator", vrfCoordinatorV2);
         console.log("Using subId", subId);
-        vm.startBroadcast();
+        vm.startBroadcast(deployerkey);
         VRFCoordinatorV2Mock(vrfCoordinatorV2).addConsumer(subId, raffle);
         vm.stopBroadcast();
     }
 
     function addConsumerUSingConfig(address raffle) public {
         HelperConfig helperConfig = new HelperConfig();
-        (uint64 subId, , , , , address vrfCoordinatorV2, ) = helperConfig
-            .activeNetworkConfig();
-        addConsumer(raffle, vrfCoordinatorV2, subId);
+        (
+            uint64 subId,
+            ,
+            ,
+            ,
+            ,
+            address vrfCoordinatorV2,
+            ,
+            uint256 deployerkey
+        ) = helperConfig.activeNetworkConfig();
+        addConsumer(raffle, vrfCoordinatorV2, subId, deployerkey);
     }
 
     function run() external {
